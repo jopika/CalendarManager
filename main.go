@@ -59,8 +59,21 @@ func main() {
 		}
 	}
 
-	err = calendarUtils.ConsolidateCalendars([]string{"primary", "n505ujqlrdsec5t50vtur8tub8@group.calendar.google.com"},
-		"kd758u5lgbc1bdg063g6o6pbo0@group.calendar.google.com", srv)
+	// verify we have write access to the output calendar
+	var outputCalendarId string = "hio9fqrc3ar7366nrln5irnd20@group.calendar.google.com"
+	var inputCalendarIds []string = []string{"primary", "n505ujqlrdsec5t50vtur8tub8@group.calendar.google.com"}
+
+	//var inputCalendarIds []string = []string{"primary"}
+
+	outputCalendarInfo, err := srv.CalendarList.Get(outputCalendarId).Do()
+	if err != nil {
+		log.Fatalf("Unable to retrieve information for output calendar\n")
+	}
+
+	log.Printf("Output calendar Info: %v\n", outputCalendarInfo)
+	log.Printf("Access Role: %v\n", outputCalendarInfo.AccessRole)
+
+	err = calendarUtils.ConsolidateCalendars(inputCalendarIds, outputCalendarId, srv)
 	if err != nil {
 		log.Fatalf("Unable to consolidate calendar\n")
 	}
