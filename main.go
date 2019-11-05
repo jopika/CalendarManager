@@ -60,7 +60,7 @@ func main() {
 	}
 
 	// verify we have write access to the output calendar
-	var outputCalendarId string = "hio9fqrc3ar7366nrln5irnd20@group.calendar.google.com"
+	var outputCalendarId string = "4soqi2o4i24d1lpal0lkc6iuhg@group.calendar.google.com"
 	var inputCalendarIds []string = []string{"primary", "n505ujqlrdsec5t50vtur8tub8@group.calendar.google.com"}
 
 	//var inputCalendarIds []string = []string{"primary"}
