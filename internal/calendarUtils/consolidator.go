@@ -10,16 +10,19 @@ import (
 func ConsolidateCalendars(inputCalendarIds []string,
 	outputCalendarId string, calendarService *calendar.Service) error {
 
-	t := time.Now().Format(time.RFC3339)
+	startDate := time.Now().AddDate(0,-1,0).Format(time.RFC3339)
 	endTime := time.Now().AddDate(0, 6, 0).Format(time.RFC3339)
+	minKeepDate := time.Now().AddDate(0,-3,0).Format(time.RFC3339)
+	maxKeepDate := time.Now().AddDate(0,3,0).Format(time.RFC3339)
 
 	var inputEvents map[string]*calendar.Event = make(map[string]*calendar.Event)
 	var outputEvents map[string]*calendar.Event = make(map[string]*calendar.Event)
+	var keepEvents map[string]*calendar.Event = make(map[string]*calendar.Event)
 
 	// Get all events part of the Calendar IDs, add them to the inputEvents map
 	for _, calendarId :=  range inputCalendarIds {
 		events, err := calendarService.Events.List(calendarId).
-			SingleEvents(true).TimeMin(t).TimeMax(endTime).Do()
+			SingleEvents(true).TimeMin(startDate).TimeMax(endTime).Do()
 		if err != nil {
 			log.Fatalf("ConsolidateCalendar encountered an " +
 				"error looking up calendar %v\n", calendarId)
@@ -32,10 +35,20 @@ func ConsolidateCalendars(inputCalendarIds []string,
 			}
 			inputEvents[event.Summary + event.Start.DateTime] = event
 		}
+
+		eventsToKeep, err := calendarService.Events.List(calendarId).
+			SingleEvents(true).TimeMin(minKeepDate).TimeMax(maxKeepDate).Do()
+		if err != nil {
+			log.Fatalf("ConsolidateCalendar encountered an " +
+				"error looking up calendar %v\n", calendarId)
+		}
+		for _, event := range eventsToKeep.Items {
+			keepEvents[event.Summary + event.Start.DateTime] = event
+		}
 	}
 
 	outputEventsList, err := calendarService.Events.List(outputCalendarId).
-		SingleEvents(true).TimeMin(t).Do()
+		SingleEvents(true).TimeMin(startDate).Do()
 	if err != nil {
 		log.Fatalf("Unable to retrieve output events with calendarID: %v\n", outputCalendarId)
 	}
@@ -46,11 +59,12 @@ func ConsolidateCalendars(inputCalendarIds []string,
 	}
 
 	// calculate the delta
-	eventsToAdd, eventsToRemove := deltaEvents(inputEvents, outputEvents)
+	eventsToAdd, eventsToRemove := deltaEvents(inputEvents, outputEvents, keepEvents)
 
 	// check each event in the consolidated list and see if it is already added
 	log.Printf("Processed %d input events.\n", len(inputEvents))
 	log.Printf("Processed %d output events.\n", len(outputEvents))
+	log.Printf("Processed %d events to keep.\n", len(keepEvents))
 	log.Printf("Found %d events to Add.\n", len(eventsToAdd))
 	log.Printf("Found %d events to Remove.\n", len(eventsToRemove))
 
@@ -114,7 +128,11 @@ func rebuildEvent(inputEvent *calendar.Event) (*calendar.Event, error) {
 }
 
 
-func deltaEvents(inputMapping map[string]*calendar.Event, outputMapping map[string]*calendar.Event) (eventsToAdd map[string]*calendar.Event, eventsToRemove map[string]*calendar.Event) {
+func deltaEvents(inputMapping map[string]*calendar.Event,
+					outputMapping map[string]*calendar.Event, keepMapping map[string]*calendar.Event) (
+					eventsToAdd map[string]*calendar.Event,
+					eventsToRemove map[string]*calendar.Event) {
+
 	eventsToAdd = make(map[string]*calendar.Event)
 	eventsToRemove = make(map[string]*calendar.Event)
 	for inputKey, inputEvent := range inputMapping {
@@ -124,7 +142,7 @@ func deltaEvents(inputMapping map[string]*calendar.Event, outputMapping map[stri
 	}
 
 	for outputKey, outputEvent := range outputMapping {
-		if _, ok := inputMapping[outputKey]; !ok {
+		if _, ok := keepMapping[outputKey]; !ok {
 			eventsToRemove[outputKey] = outputEvent
 		}
 	}
