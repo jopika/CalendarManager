@@ -3,14 +3,14 @@ package main
 import (
 	"./internal/calendarUtils"
 	"context"
-	"fmt"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/calendar/v3"
 	"google.golang.org/api/option"
 	"io/ioutil"
 	"log"
-	"time"
 )
+
+const TEST = true;
 
 func main() {
 	b, err := ioutil.ReadFile("credentials.json")
@@ -31,6 +31,7 @@ func main() {
 		log.Fatalf("Unable to retrieve Calendar client: %v", err)
 	}
 
+	/*
 	t := time.Now().Format(time.RFC3339)
 	events, err := srv.Events.List("primary").ShowDeleted(false).
 		SingleEvents(true).TimeMin(t).MaxResults(10).OrderBy("startTime").Do()
@@ -58,12 +59,18 @@ func main() {
 			fmt.Printf("Calendar found: %v with description: %v\n", calendar.Id, calendar.Summary)
 		}
 	}
+	*/
 
-	// verify we have write access to the output calendar
-	var outputCalendarId string = "4soqi2o4i24d1lpal0lkc6iuhg@group.calendar.google.com"
-	var inputCalendarIds []string = []string{"primary", "n505ujqlrdsec5t50vtur8tub8@group.calendar.google.com"}
+	var outputCalendarId string
+	var inputCalendarIds []string
 
-	//var inputCalendarIds []string = []string{"primary"}
+	if TEST {
+		outputCalendarId = "6q7v8tjb279pselcp2587crffk@group.calendar.google.com"
+		inputCalendarIds = []string{"primary", "n505ujqlrdsec5t50vtur8tub8@group.calendar.google.com"}
+	} else {
+		outputCalendarId = "4soqi2o4i24d1lpal0lkc6iuhg@group.calendar.google.com"
+		inputCalendarIds = []string{"primary", "n505ujqlrdsec5t50vtur8tub8@group.calendar.google.com"}
+	}
 
 	outputCalendarInfo, err := srv.CalendarList.Get(outputCalendarId).Do()
 	if err != nil {
