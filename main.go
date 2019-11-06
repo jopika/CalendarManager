@@ -10,7 +10,10 @@ import (
 	"log"
 )
 
-const TEST = true;
+const TEST bool = true
+const PROD_CALENDAR_ID string = "4soqi2o4i24d1lpal0lkc6iuhg@group.calendar.google.com"
+const TEST_CALENDAR_ID string = "vomboj3vcbuttook7qfmbgn7ig@group.calendar.google.com"
+
 
 func main() {
 	b, err := ioutil.ReadFile("credentials.json")
@@ -65,10 +68,10 @@ func main() {
 	var inputCalendarIds []string
 
 	if TEST {
-		outputCalendarId = "6q7v8tjb279pselcp2587crffk@group.calendar.google.com"
+		outputCalendarId = TEST_CALENDAR_ID
 		inputCalendarIds = []string{"primary", "n505ujqlrdsec5t50vtur8tub8@group.calendar.google.com"}
 	} else {
-		outputCalendarId = "4soqi2o4i24d1lpal0lkc6iuhg@group.calendar.google.com"
+		outputCalendarId = PROD_CALENDAR_ID
 		inputCalendarIds = []string{"primary", "n505ujqlrdsec5t50vtur8tub8@group.calendar.google.com"}
 	}
 

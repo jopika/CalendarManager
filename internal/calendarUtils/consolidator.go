@@ -6,6 +6,8 @@ import (
 	"time"
 )
 
+const CLEANUP = false
+
 type CalendarMap map[string]*calendar.Event
 
 // Directional Consolidation of Calendar events
@@ -86,7 +88,7 @@ func calculateDelta(eventsToSync CalendarMap, currentEvents CalendarMap,
 	eventsToAddRef *CalendarMap, eventsToRemoveRef *CalendarMap) {
 
 	eventsToAdd := *eventsToAddRef
-	eventsToRemove := *eventsToAddRef
+	eventsToRemove := *eventsToRemoveRef
 
 	for eventKey, event := range eventsToSync {
 		if _, ok := currentEvents[eventKey]; !ok {
@@ -113,15 +115,18 @@ func getAllEvents(calendarId string, startDate string, endDate string,
 	}
 
 	for _, event := range events.Items {
-		if event == nil {
-			continue
-		}
-		//eventKey := generateEventMapKey(event)
-		eventKey := event.Summary + " : " + event.Start.DateTime
+		//if event == nil {
+		//	continue
+		//}
+		eventKey := generateEventMapKey(event)
+		//eventKey := event.Summary + " : " + event.Start.DateTime + " : " + event.End.DateTime
 		if _, ok := resultantEvents[eventKey]; !ok {
 			resultantEvents[eventKey] = event
 		} else {
 			log.Printf("Duplicate event found with key: %v\n", eventKey)
+			if CLEANUP {
+				_ = service.Events.Delete(calendarId, event.Id).Do()
+			}
 		}
 	}
 
@@ -276,7 +281,11 @@ func deltaEvents(
 */
 
 func generateEventMapKey(event *calendar.Event) string {
+	if event == nil {
+		log.Fatalf("Error: Unable to access event due to invalid memory address: %v", event)
+	}
+
 	//log.Printf("Event%v\n", event)
 	//log.Printf("Event: %v with %v\n", event.Summary, event.OriginalStartTime.DateTime)
-	return event.Summary + " : " + event.Start.DateTime
+	return event.Summary + " : " + event.Start.DateTime + " : "+ event.End.DateTime
 }
