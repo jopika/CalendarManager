@@ -1,18 +1,21 @@
 package calendarUtils
 
 import (
+	"../configManager"
 	"google.golang.org/api/calendar/v3"
 	"log"
+	"strings"
 	"time"
 )
 
 const CLEANUP = false
+const DELETE_ALL = false
 
 type CalendarMap map[string]*calendar.Event
 
 // Directional Consolidation of Calendar events
-func ConsolidateCalendars(inputCalendarIds []string,
-	outputCalendarId string, calendarService *calendar.Service) error {
+func ConsolidateCalendars(inputCalendarIds []string, outputCalendarId string,
+	config configManager.Config, calendarService *calendar.Service) error {
 
 	var inputEvents CalendarMap = make(CalendarMap)
 	var outputEvents CalendarMap = make(CalendarMap)
@@ -49,15 +52,29 @@ func ConsolidateCalendars(inputCalendarIds []string,
 	log.Printf("Found %d events to remove\n", len(eventsToRemove))
 
 	// Perform the changes
-	performChanges(outputCalendarId, eventsToAdd, eventsToRemove, calendarService)
+	performChanges(outputCalendarId, eventsToAdd, eventsToRemove, calendarService, config.BlacklistedWords)
 
 	return nil
 }
 
+func eventDecision(event *calendar.Event, blacklistedWords []string) bool {
+	for _, word := range blacklistedWords {
+		if strings.Index(event.Summary, word) != -1 {
+			log.Printf("Skipping event: %v\n", event.Summary)
+			return false
+		}
+	}
+
+	return true
+}
+
 func performChanges(calendarId string, eventsToAdd CalendarMap,
-	eventsToRemove CalendarMap, service *calendar.Service) {
+	eventsToRemove CalendarMap, service *calendar.Service, blacklistedWords []string) {
 
 	for _, eventToAdd := range eventsToAdd {
+		if !eventDecision(eventToAdd, blacklistedWords) {
+			continue
+		}
 		newEvent, _ := rebuildEvent(eventToAdd)
 		_, err := service.Events.Insert(calendarId, newEvent).Do()
 		if err != nil {
@@ -95,6 +112,9 @@ func calculateDelta(eventsToSync CalendarMap, currentEvents CalendarMap,
 
 	for eventKey, event := range currentEvents {
 		if _, ok := eventsToSync[eventKey]; !ok {
+			eventsToRemove[eventKey] = event
+		}
+		if DELETE_ALL {
 			eventsToRemove[eventKey] = event
 		}
 	}
@@ -138,6 +158,7 @@ func rebuildEvent(inputEvent *calendar.Event) (*calendar.Event, error) {
 	outputEvent.Summary = inputEvent.Summary
 	outputEvent.Description = inputEvent.Description
 	outputEvent.ColorId = inputEvent.ColorId
+	outputEvent.Location = inputEvent.Location
 	outputEvent.Start = inputEvent.Start
 	outputEvent.End = inputEvent.End
 
@@ -148,8 +169,5 @@ func generateEventMapKey(event *calendar.Event) string {
 	if event == nil {
 		log.Fatalf("Error: Unable to access event due to invalid memory address: %v", event)
 	}
-
-	//log.Printf("Event%v\n", event)
-	//log.Printf("Event: %v with %v\n", event.Summary, event.OriginalStartTime.DateTime)
 	return event.Summary + " : " + event.Start.DateTime + " : "+ event.End.DateTime
 }

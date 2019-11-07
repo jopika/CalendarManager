@@ -13,6 +13,7 @@ type Config struct {
 	TestInputCalendarIds []string `json:"test_input_calendar_ids"`
 	TestOutputCalendarId string `json:"test_output_calendar_id"`
 	Environment Environment `json:"environment"`
+	BlacklistedWords []string `json:"blacklisted_words"`
 }
 
 type Environment string

@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-const TEST bool = true
+const TEST bool = false
 
 func main() {
 	srv := buildClient()
@@ -29,7 +29,7 @@ func main() {
 	go func() {
 		for {
 			log.Println("Beginning to consolidate calendar")
-			err := calendarUtils.ConsolidateCalendars(inputCalendarIds, outputCalendarId, srv)
+			err := calendarUtils.ConsolidateCalendars(inputCalendarIds, outputCalendarId, config, srv)
 			if err != nil {
 				log.Fatalf("Unable to consolidate calendars\n")
 			}
