@@ -1,0 +1,9 @@
+{
+  "input_calendar_ids": ["primary"],
+  "output_calendar_id": "",
+  "sync_interval_mins": 1,
+  "test_input_calendar_ids": ["primary"],
+  "test_output_calendar_id": "",
+  "environment": "prod",
+  "blacklisted_words": []
+}
