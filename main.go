@@ -12,8 +12,6 @@ import (
 	"time"
 )
 
-const TEST bool = false
-
 func main() {
 	srv := buildClient()
 
@@ -40,7 +38,7 @@ func main() {
 		}
 	}()
 
-	<- complete
+	<-complete
 }
 
 // Builds the client and returns it
@@ -67,20 +65,15 @@ func buildClient() *calendar.Service {
 }
 
 func retrieveCalendarIds(config configManager.Config) (inputCalendarIds []string, outputCalendarId string) {
-	if TEST {
+	switch config.Environment {
+	case configManager.Production:
+		inputCalendarIds = config.InputCalendarIds
+		outputCalendarId = config.OutputCalendarId
+		break
+	case configManager.Test:
+	case configManager.Dev:
 		inputCalendarIds = config.TestInputCalendarIds
 		outputCalendarId = config.TestOutputCalendarId
-	} else {
-		switch config.Environment {
-		case configManager.Production:
-			inputCalendarIds = config.InputCalendarIds
-			outputCalendarId = config.OutputCalendarId
-			break
-		case configManager.Test:
-		case configManager.Dev:
-			inputCalendarIds = config.TestInputCalendarIds
-			outputCalendarId = config.TestOutputCalendarId
-		}
 	}
 
 	return inputCalendarIds, outputCalendarId

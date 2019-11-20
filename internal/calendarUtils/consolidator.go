@@ -9,7 +9,6 @@ import (
 )
 
 const CLEANUP = false
-const DELETE_ALL = false
 
 type CalendarMap map[string]*calendar.Event
 
@@ -24,7 +23,6 @@ func ConsolidateCalendars(inputCalendarIds []string, outputCalendarId string,
 
 	// build the start and end times
 	currentTime := time.Now()
-
 	startScanTime := currentTime.AddDate(0, 0, -7).Format(time.RFC3339)
 	endScanTime := currentTime.AddDate(0, 2, 0).Format(time.RFC3339)
 
@@ -32,14 +30,14 @@ func ConsolidateCalendars(inputCalendarIds []string, outputCalendarId string,
 	for _, calendarId := range inputCalendarIds {
 		err := getAllEvents(calendarId, startScanTime, endScanTime, &inputEvents, calendarService)
 		if err != nil {
-			log.Fatalf("Error: Unable to retrieve events for calendar: %v", calendarId)
+			log.Fatalf("Error: Unable to retrieve events for calendar: %v\n", calendarId)
 		}
 	}
 
 	// Grab all the output events in the sliding window
 	err := getAllEvents(outputCalendarId, startScanTime, endScanTime, &outputEvents, calendarService)
 	if err != nil {
-		log.Fatalf("Error: Unable to retrieve events for calendar: %v", outputCalendarId)
+		log.Fatalf("Error: Unable to retrieve events for calendar: %v\n", outputCalendarId)
 	}
 
 	log.Printf("Processed %d input events\n", len(inputEvents))
@@ -114,9 +112,6 @@ func calculateDelta(eventsToSync CalendarMap, currentEvents CalendarMap,
 		if _, ok := eventsToSync[eventKey]; !ok {
 			eventsToRemove[eventKey] = event
 		}
-		if DELETE_ALL {
-			eventsToRemove[eventKey] = event
-		}
 	}
 }
 
@@ -151,7 +146,7 @@ func getAllEvents(calendarId string, startDate string, endDate string,
 }
 
 // Rebuilds an Event to be inserted
-// Copies only the: Title, Start Time, End Time, Description
+// Copies only the: Title, Color, Location, Start Time, End Time, Description
 func rebuildEvent(inputEvent *calendar.Event) (*calendar.Event, error) {
 	outputEvent := new(calendar.Event)
 
@@ -165,6 +160,7 @@ func rebuildEvent(inputEvent *calendar.Event) (*calendar.Event, error) {
 	return outputEvent, nil
 }
 
+// Generates a key that identifies events
 func generateEventMapKey(event *calendar.Event) string {
 	if event == nil {
 		log.Fatalf("Error: Unable to access event due to invalid memory address: %v", event)
